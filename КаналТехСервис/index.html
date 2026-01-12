@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>КаналТехСервис</title>
+    
+    <link rel="icon" type="image/jpeg" href="logo.jpg">
+    <link rel="apple-touch-icon" href="logo.jpg">
+    
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    
+    <style>
+        /* === TINKOFF STYLE THEME === */
+        :root {
+            --primary: #333333; 
+            --primary-bg: #FFDD2D; 
+            --accent-blue: #428BF9;
+            --success: #22C55E;
+            --danger: #EF4444;
+            --bg-body: #F3F4F6;
+            --bg-card: #FFFFFF;
+            --text-main: #111827;
+            --text-sec: #6B7280;
+            --border: #E5E7EB;
+            --input-bg: #F9FAFB;
+            --radius-l: 24px;
+            --radius-m: 16px;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+            --safe-top: env(safe-area-inset-top, 20px);
+            --safe-bottom: env(safe-area-inset-bottom, 20px);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-body: #000000;
+                --bg-card: #1C1C1E;
+                --text-main: #FFFFFF;
+                --text-sec: #9CA3AF;
+                --border: #2C2C2E;
+                --input-bg: #2C2C2E;
+                --primary-bg: #F5D300;
+            }
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-body);
+            color: var(--text-main);
+            padding: 20px;
+            padding-top: calc(var(--safe-top) + 10px);
+            padding-bottom: calc(var(--safe-bottom) + 90px);
+            min-height: 100vh;
+        }
+
+        .container { max-width: 600px; margin: 0 auto; }
+
+        /* --- КАРТОЧКИ --- */
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius-l);
+            padding: 24px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* --- ШАПКА --- */
+        header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;
+        }
+        .header-left { display: flex; align-items: center; gap: 12px; }
+        .logo-box {
+            width: 48px; height: 48px; background: var(--bg-card);
+            border-radius: 14px; display: flex; align-items: center; justify-content: center;
+            box-shadow: var(--shadow); overflow: hidden;
+        }
+        .logo-img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .app-title { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+        .app-status { font-size: 13px; color: var(--text-sec); font-weight: 500; display:flex; align-items:center; gap:6px; }
+
+        /* --- СТАТИСТИКА --- */
+        .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+        .stat-card {
+            background: var(--bg-card); padding: 16px; border-radius: var(--radius-m);
+            box-shadow: var(--shadow); display: flex; flex-direction: column;
+        }
+        .stat-card.main { 
+            grid-column: span 2; background: var(--primary-bg); color: #000;
+            flex-direction: row; justify-content: space-between; align-items: center;
+        }
+        .stat-label { font-size: 12px; opacity: 0.7; font-weight: 600; text-transform: uppercase; margin-bottom: 4px; }
+        .stat-val { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+        .val-inc { color: var(--success); }
+        .val-exp { color: var(--danger); }
+
+        /* --- МЕНЮ (НИЗ) --- */
+        .bottom-nav {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            width: calc(100% - 40px); max-width: 500px;
+            background: rgba(40, 40, 40, 0.9); backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px; padding: 12px;
+            display: flex; justify-content: space-around; align-items: center;
+            z-index: 1000; box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .nav-item {
+            color: rgba(255,255,255,0.5); text-align: center;
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+            font-size: 10px; font-weight: 600; cursor: pointer; padding: 0 10px;
+        }
+        .nav-item i { font-size: 24px; transition: 0.2s; }
+        .nav-item.active { color: #fff; }
+        .nav-item.active i { transform: translateY(-2px); color: var(--primary-bg); }
+
+        .fab {
+            width: 50px; height: 50px; background: var(--primary-bg); border-radius: 18px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px; color: #000; box-shadow: 0 4px 15px rgba(255, 221, 45, 0.4);
+            cursor: pointer; transition: 0.2s;
+        }
+        .fab:active { transform: scale(0.95); }
+
+        /* --- СПИСОК --- */
+        .search-bar { display: flex; gap: 10px; margin-bottom: 20px; }
+        .search-input {
+            flex: 1; background: var(--bg-card); border: none; padding: 14px;
+            border-radius: var(--radius-m); font-size: 16px; box-shadow: var(--shadow);
+            color: var(--text-main); outline: none;
+        }
+        .list-item {
+            background: var(--bg-card); padding: 16px; border-radius: 20px;
+            margin-bottom: 12px; display: grid; grid-template-columns: auto 1fr auto;
+            gap: 16px; align-items: center; box-shadow: var(--shadow);
+            transition: transform 0.1s;
+        }
+        .list-item:active { transform: scale(0.98); }
+        .icon-box {
+            width: 48px; height: 48px; border-radius: 16px;
+            display: flex; align-items: center; justify-content: center; font-size: 24px;
+        }
+        .icon-inc { background: #E1FCEF; color: #10B981; }
+        .icon-exp { background: #FEE2E2; color: #EF4444; }
+        .item-main h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+        .item-main p { font-size: 13px; color: var(--text-sec); display: flex; align-items: center; gap: 6px; }
+        .item-amt { text-align: right; font-size: 17px; font-weight: 800; }
+        .tag { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+        .tag-gray { background: var(--input-bg); color: var(--text-sec); }
+
+        /* --- ФОРМА --- */
+        .inp-label { font-size: 12px; font-weight: 700; color: var(--text-sec); margin-bottom: 8px; margin-top: 16px; display: block; text-transform: uppercase; }
+        .inp-field {
+            width: 100%; background: var(--input-bg); border: 1px solid transparent;
+            padding: 16px; border-radius: 16px; font-size: 17px; color: var(--text-main);
+            outline: none; transition: 0.2s; -webkit-appearance: none;
+        }
+        .inp-field:focus { background: var(--bg-card); border-color: var(--accent-blue); box-shadow: 0 0 0 4px rgba(66, 139, 249, 0.1); }
+        
+        .chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; }
+        .chip {
+            background: var(--input-bg); padding: 10px 18px; border-radius: 12px;
+            font-size: 14px; font-weight: 600; color: var(--text-main); white-space: nowrap;
+        }
+        .chip:active { background: var(--text-main); color: var(--bg-card); }
+
+        .btn-main {
+            width: 100%; background: var(--primary-bg); color: #000;
+            padding: 18px; border-radius: 20px; border: none;
+            font-size: 18px; font-weight: 700; margin-top: 30px;
+            box-shadow: 0 8px 20px rgba(255, 221, 45, 0.3);
+        }
+        
+        .date-switch { display: flex; background: var(--input-bg); padding: 4px; border-radius: 14px; margin-bottom: 10px; }
+        .ds-btn { flex: 1; padding: 10px; text-align: center; border-radius: 10px; font-size: 14px; font-weight: 600; color: var(--text-sec); transition: 0.2s; }
+        .ds-btn.active { background: var(--bg-card); color: var(--text-main); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+
+        .view { display: none; padding-bottom: 40px; }
+        .view.active { display: block; animation: fade 0.3s; }
+        @keyframes fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ЛОАДЕР И ТОСТ */
+        #loader { position: fixed; inset: 0; background: var(--bg-body); z-index: 2000; display: flex; justify-content: center; align-items: center; }
+        .spinner { width: 40px; height: 40px; border: 4px solid var(--text-sec); border-top-color: var(--primary-bg); border-radius: 50%; animation: spin 0.8s infinite linear; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px); background: #333; color: #fff; padding: 12px 24px; border-radius: 30px; font-weight: 600; z-index: 3000; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+
+        /* === НОВЫЕ СТИЛИ ДЛЯ ФИЛЬТРОВ === */
+        .filter-btn {
+            background: var(--bg-card);
+            border: none;
+            border-radius: var(--radius-m);
+            padding: 14px;
+            min-width: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-main);
+            box-shadow: var(--shadow);
+            transition: 0.2s;
+        }
+        
+        .filter-btn.active {
+            background: var(--accent-blue);
+            color: white;
+        }
+        
+        .search-wrapper {
+            position: relative;
+            flex: 1;
+        }
+        
+        .search-clear {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-sec);
+            font-size: 18px;
+            cursor: pointer;
+            display: none;
+            padding: 5px;
+        }
+        
+        .active-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+            min-height: 40px;
+        }
+        
+        .filter-chip {
+            background: var(--primary-bg);
+            color: #000;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .filter-chip-remove {
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+            padding-left: 4px;
+        }
+        
+        .clear-filters-btn {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .filter-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .filter-chips .chip {
+            background: var(--input-bg);
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        
+        .filter-chips .chip.active {
+            background: var(--accent-blue);
+            color: white;
+        }
+        
+        .filter-section {
+            margin-bottom: 20px;
+        }
+        
+        .filter-section-title {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--text-sec);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .filter-reset {
+            background: none;
+            border: none;
+            color: var(--accent-blue);
+            font-size: 12px;
+            cursor: pointer;
+            padding: 4px 8px;
+        }
+
+        /* === БЫСТРЫЕ КНОПКИ ФИЛЬТРА ПО ТИПУ === */
+        .type-filter-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+            background: var(--input-bg);
+            padding: 6px;
+            border-radius: var(--radius-m);
+        }
+        
+        .type-filter-btn {
+            background: var(--input-bg);
+            border: none;
+            border-radius: 12px;
+            padding: 14px 10px;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-sec);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .type-filter-btn.active {
+            background: var(--bg-card);
+            color: var(--text-main);
+            box-shadow: var(--shadow);
+        }
+        
+        .type-filter-btn.income.active {
+            color: var(--success);
+        }
+        
+        .type-filter-btn.expense.active {
+            color: var(--danger);
+        }
+        
+        .type-filter-btn i {
+            font-size: 18px;
+        }
+
+        /* === МОБИЛЬНЫЕ ИСПРАВЛЕНИЯ === */
+        @media (max-width: 480px) {
+            /* 1. Исправление заголовка с месяцем */
+            header {
+                flex-wrap: wrap;
+                gap: 12px;
+            }
+            
+            .header-left {
+                min-width: 0;
+                flex: 1;
+            }
+            
+            #monthPicker {
+                width: 100% !important;
+                max-width: 100% !important;
+                text-align: left !important;
+                padding: 8px 12px !important;
+                background: var(--input-bg) !important;
+                border-radius: 12px !important;
+                border: 1px solid var(--border) !important;
+                font-size: 14px !important;
+                margin-top: 4px;
+                -webkit-appearance: none;
+                appearance: none;
+            }
+            
+            /* 2. Исправление строки поиска */
+            .search-bar {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .search-wrapper {
+                width: 100%;
+            }
+            
+            .search-input {
+                width: 100% !important;
+            }
+            
+            #workerFilter {
+                width: 100% !important;
+                flex: 1 !important;
+            }
+            
+            .filter-btn {
+                width: 100%;
+            }
+            
+            /* 3. Адаптивная сетка для статистики */
+            .stats-row {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .stat-card.main {
+                grid-column: span 1;
+            }
+            
+            /* 4. Уменьшение отступов на маленьких экранах */
+            body {
+                padding-left: 16px;
+                padding-right: 16px;
+            }
+            
+            .container {
+                max-width: 100%;
+            }
+            
+            .card {
+                padding: 18px;
+                border-radius: 20px;
+            }
+            
+            /* 5. Исправление нижнего меню */
+            .bottom-nav {
+                width: calc(100% - 32px);
+                border-radius: 20px;
+                padding: 10px;
+            }
+            
+            .nav-item {
+                padding: 0 6px;
+                font-size: 9px;
+            }
+            
+            .fab {
+                width: 44px;
+                height: 44px;
+                border-radius: 16px;
+            }
+            
+            /* 6. Исправление списка операций */
+            .list-item {
+                padding: 14px;
+                gap: 12px;
+            }
+            
+            .icon-box {
+                width: 42px;
+                height: 42px;
+            }
+            
+            /* 7. Адаптация кнопок фильтра типа */
+            .type-filter-buttons {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            
+            .type-filter-btn {
+                padding: 12px;
+                font-size: 15px;
+            }
+        }
+
+        /* Дополнительные исправления для очень маленьких экранов */
+        @media (max-width: 350px) {
+            .app-title {
+                font-size: 18px;
+            }
+            
+            .logo-box {
+                width: 42px;
+                height: 42px;
+            }
+            
+            .stat-val {
+                font-size: 18px;
+            }
+            
+            .list-item {
+                padding: 12px;
+                gap: 10px;
+            }
+            
+            .icon-box {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+            }
+            
+            .item-amt {
+                font-size: 15px;
+            }
+            
+            .item-main h3 {
+                font-size: 15px;
+            }
+        }
+
+        /* Исправление для выпадающего списка месяца на всех экранах */
+        #monthPicker {
+            min-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 180px;
+            cursor: pointer;
+        }
+
+        /* Исправление строки поиска на всех экранах */
+        .search-bar {
+            align-items: stretch;
+        }
+
+        #workerFilter {
+            min-width: 0;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+
+<div id="loader"><div class="spinner"></div></div>
+<div id="toast" class="toast">Готово</div>
+
+<div class="container">
+    <header>
+        <div class="header-left">
+            <div class="logo-box">
+                <img src="logo.jpg" class="logo-img" onerror="this.style.display='none'">
+            </div>
+            <div>
+                <div class="app-title">КаналТехСервис</div>
+                <div class="app-status" id="statusText"><span style="color:#F59E0B">●</span> Загрузка...</div>
+            </div>
+        </div>
+        <select id="monthPicker" onchange="app.load()" style="background:transparent; border:none; font-weight:700; font-size:15px; color:var(--text-main); outline:none; text-align:right"></select>
+    </header>
+
+    <div id="view-home" class="view active">
+        <div class="stats-row">
+            <div class="stat-card main">
+                <div>
+                    <div class="stat-label" style="color:rgba(0,0,0,0.6)">Баланс</div>
+                    <div class="stat-val" id="sBal">0 ₽</div>
+                </div>
+                <i class="ri-wallet-3-fill" style="font-size:32px; opacity:0.2"></i>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Доход</div>
+                <div class="stat-val val-inc" id="sInc">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Расход</div>
+                <div class="stat-val val-exp" id="sExp">0</div>
+            </div>
+        </div>
+
+        <!-- БЫСТРЫЕ КНОПКИ ФИЛЬТРА ПО ТИПУ -->
+        <div class="type-filter-buttons">
+            <button class="type-filter-btn active" onclick="app.setQuickTypeFilter('all')">
+                <i class="ri-list-check"></i> Все
+            </button>
+            <button class="type-filter-btn" onclick="app.setQuickTypeFilter('income')">
+                <i class="ri-arrow-up-line"></i> Доходы
+            </button>
+            <button class="type-filter-btn" onclick="app.setQuickTypeFilter('expense')">
+                <i class="ri-arrow-down-line"></i> Расходы
+            </button>
+        </div>
+
+        <!-- Улучшенная строка поиска -->
+        <div class="search-bar">
+            <div class="search-wrapper">
+                <input type="text" class="search-input" id="searchInp" placeholder="Поиск по всем полям..." oninput="app.handleSearch()">
+                <button id="clearSearch" class="search-clear">×</button>
+            </div>
+            
+            <button id="filterBtn" class="filter-btn" onclick="app.toggleFilters()">
+                <i class="ri-filter-line"></i>
+            </button>
+            
+            <select id="workerFilter" class="search-input" style="width:150px; flex:0.6" onchange="app.handleFilterChange()">
+                <option value="">Все исполнители</option>
+            </select>
+        </div>
+
+        <!-- Панель активных фильтров -->
+        <div id="activeFilters" class="active-filters"></div>
+
+        <!-- Расширенные фильтры -->
+        <div id="advancedFilters" class="card" style="display:none; margin-bottom:20px;">
+            <div class="filter-section">
+                <div class="filter-section-title">
+                    <span>Диапазон сумм</span>
+                    <button class="filter-reset" onclick="app.resetAmountFilter()">Сбросить</button>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                    <div>
+                        <input type="number" id="filterMinAmount" class="inp-field" placeholder="От" onchange="app.handleFilterChange()">
+                    </div>
+                    <div>
+                        <input type="number" id="filterMaxAmount" class="inp-field" placeholder="До" onchange="app.handleFilterChange()">
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <div class="filter-section-title">
+                    <span>Категории</span>
+                    <button class="filter-reset" onclick="app.resetCategoryFilter()">Сбросить</button>
+                </div>
+                <div id="filterCategories" class="filter-chips"></div>
+            </div>
+
+            <div class="filter-section">
+                <div class="filter-section-title">
+                    <span>Статус оплаты</span>
+                    <button class="filter-reset" onclick="app.resetPaymentFilter()">Сбросить</button>
+                </div>
+                <div class="chips">
+                    <div class="chip" onclick="app.setPaymentStatus('all')">Все</div>
+                    <div class="chip" onclick="app.setPaymentStatus('paid')">Оплачено</div>
+                    <div class="chip" onclick="app.setPaymentStatus('unpaid')">Не оплачено</div>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <div class="filter-section-title">
+                    <span>Тип операции</span>
+                    <button class="filter-reset" onclick="app.resetTypeFilter()">Сбросить</button>
+                </div>
+                <div class="chips">
+                    <div class="chip" onclick="app.setTypeFilter('all')">Все</div>
+                    <div class="chip" onclick="app.setTypeFilter('income')">Доход</div>
+                    <div class="chip" onclick="app.setTypeFilter('expense')">Расход</div>
+                </div>
+            </div>
+
+            <button class="btn-main" onclick="app.closeFilters()" style="background:var(--accent-blue); color:white">Применить фильтры</button>
+        </div>
+
+        <div id="listContainer"></div>
+    </div>
+
+    <div id="view-add" class="view">
+        <h2 style="margin-bottom:20px">Новая запись</h2>
+        <input type="hidden" id="eid">
+
+        <div class="date-switch">
+            <div class="ds-btn" onclick="app.setDate(0); this.classList.add('active'); this.nextElementSibling.classList.remove('active')">Сегодня</div>
+            <div class="ds-btn" onclick="app.setDate(-1); this.classList.add('active'); this.previousElementSibling.classList.remove('active')">Вчера</div>
+        </div>
+        <input type="date" id="iDate" class="inp-field" style="margin-bottom:15px">
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px">
+            <div>
+                <span class="inp-label">Тип</span>
+                <select id="iType" class="inp-field" onchange="app.cats()"><option>Доход</option><option>Расход</option></select>
+            </div>
+            <div>
+                <span class="inp-label">Сумма</span>
+                <input type="number" id="iAmt" class="inp-field" placeholder="0" inputmode="numeric">
+            </div>
+        </div>
+
+        <span class="inp-label">Категория</span>
+        <select id="iCat" class="inp-field"></select>
+
+        <span class="inp-label">Объем (м³)</span>
+        <input type="number" id="iVol" class="inp-field" placeholder="0.0" step="0.1" inputmode="decimal">
+        <div class="chips" style="margin-top:10px">
+            <div class="chip" onclick="app.setVol(3.75)">3.75</div>
+            <div class="chip" onclick="app.setVol(4)">4</div>
+            <div class="chip" onclick="app.setVol(5)">5</div>
+            <div class="chip" onclick="app.setVol(10)">10</div>
+            <div class="chip" onclick="app.setVol(12)">12</div>
+        </div>
+
+        <span class="inp-label">Исполнитель / Машина</span>
+        <input type="text" id="iWork" class="inp-field" list="lWork" placeholder="Выбрать...">
+        <datalist id="lWork"></datalist>
+
+        <span class="inp-label">Клиент</span>
+        <input type="text" id="iCli" class="inp-field" list="lCli" placeholder="Поиск...">
+        <datalist id="lCli"></datalist>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px">
+            <div><span class="inp-label">Оплата</span><select id="iPay" class="inp-field"><option>Наличные</option><option>Карта</option><option>Безнал</option></select></div>
+            <div><span class="inp-label">Статус</span><select id="iStat" class="inp-field"><option value="Оплачено">Оплачено</option><option value="Не оплачено">Не оплачено</option></select></div>
+        </div>
+
+        <span class="inp-label">Адрес / Заметка</span>
+        <input type="text" id="iDesc" class="inp-field" placeholder="Комментарий...">
+
+        <button class="btn-main" id="btnSave" onclick="app.save()">Сохранить</button>
+        <div style="text-align:center; margin-top:20px; display:flex; gap:20px; justify-content:center">
+            <span style="color:var(--danger); font-weight:600; cursor:pointer; display:none" id="btnDel" onclick="app.del()">Удалить</span>
+            <span style="color:var(--text-sec); cursor:pointer; display:none" id="btnCancel" onclick="app.reset()">Отмена</span>
+        </div>
+    </div>
+
+    <div id="view-stats" class="view">
+        <h2 style="margin-bottom:20px">Аналитика</h2>
+        
+        <div class="card">
+            <h3 style="margin-bottom:15px">💰 Доходы</h3>
+            <div style="height:250px"><canvas id="chartInc"></canvas></div>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-bottom:15px">💸 Расходы</h3>
+            <div style="height:250px"><canvas id="chartExp"></canvas></div>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-bottom:15px">📈 Динамика</h3>
+            <div style="height:200px"><canvas id="chartTrend"></canvas></div>
+        </div>
+
+        <button class="btn-main" style="background:#fff; color:#000; border:1px solid #ddd" onclick="app.xls()">Скачать Excel Отчет</button>
+    </div>
+</div>
+
+<div class="bottom-nav">
+    <div class="nav-item active" onclick="app.nav('view-home', this)">
+        <i class="ri-home-5-line"></i>
+        <span>Главная</span>
+    </div>
+    <div class="fab" onclick="app.nav('view-add', null, true)">
+        <i class="ri-add-line"></i>
+    </div>
+    <div class="nav-item" onclick="app.nav('view-stats', this)">
+        <i class="ri-pie-chart-2-line"></i>
+        <span>Анализ</span>
+    </div>
+</div>
+
+<script>
+    // === ВАША ССЫЛКА API ===
+    const API_URL = "https://script.google.com/macros/s/AKfycbzUdgYqiBVBxlf2fH6o5TvtOyXpbyTD-rrCkrzQE83gcO07vWXVt_5y7Aewr_o_7ro_cA/exec";
+
+    const CATS = {
+        'Доход': ['Откачка ЖБО', 'Промывка', 'Доставка воды', 'Илосос', 'Аренда', 'Прочее'],
+        'Расход': ['ГСМ', 'Зарплата', 'Ремонт', 'Слив', 'Запчасти', 'Налоги', 'Реклама']
+    };
+
+    const app = {
+        d: [],
+        filters: {
+            searchText: '',
+            worker: '',
+            minAmount: null,
+            maxAmount: null,
+            categories: [],
+            paymentStatus: 'all',
+            type: 'all'
+        },
+        
+        // Добавим переменные для общих сумм
+        totalIncome: 0,
+        totalExpense: 0,
+        totalBalance: 0,
+        
+        init: async () => {
+            app.setDate(0);
+            app.cats();
+            await app.loadLists();
+            await app.initMonths();
+            app.setupSearchEvents();
+            app.loadFiltersFromStorage();
+            app.updateQuickTypeButtons();
+        },
+
+        setupSearchEvents: () => {
+            const searchInput = document.getElementById('searchInp');
+            const clearBtn = document.getElementById('clearSearch');
+            
+            // Обработка клавиши Enter
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    app.handleSearch();
+                }
+            });
+            
+            // Обработка кнопки очистки
+            clearBtn.addEventListener('click', () => {
+                searchInput.value = '';
+                app.filters.searchText = '';
+                clearBtn.style.display = 'none';
+                app.render();
+                app.saveFiltersToStorage();
+            });
+            
+            // Показать/скрыть кнопку очистки
+            searchInput.addEventListener('input', () => {
+                clearBtn.style.display = searchInput.value ? 'block' : 'none';
+            });
+        },
+
+        loadFiltersFromStorage: () => {
+            try {
+                const saved = localStorage.getItem('kts_filters');
+                if (saved) {
+                    app.filters = JSON.parse(saved);
+                    app.applyLoadedFilters();
+                }
+            } catch(e) {
+                console.log('Не удалось загрузить фильтры из хранилища');
+            }
+        },
+
+        saveFiltersToStorage: () => {
+            try {
+                localStorage.setItem('kts_filters', JSON.stringify(app.filters));
+            } catch(e) {
+                console.log('Не удалось сохранить фильтры');
+            }
+        },
+
+        applyLoadedFilters: () => {
+            // Применяем загруженные фильтры к UI
+            document.getElementById('searchInp').value = app.filters.searchText;
+            document.getElementById('workerFilter').value = app.filters.worker;
+            document.getElementById('filterMinAmount').value = app.filters.minAmount || '';
+            document.getElementById('filterMaxAmount').value = app.filters.maxAmount || '';
+            
+            // Показываем кнопку очистки если есть текст поиска
+            if (app.filters.searchText) {
+                document.getElementById('clearSearch').style.display = 'block';
+            }
+            
+            // Обновляем категории в UI
+            app.updateCategoryFilterUI();
+            app.updateQuickTypeButtons();
+            app.renderActiveFilters();
+        },
+
+        updateQuickTypeButtons: () => {
+            const buttons = document.querySelectorAll('.type-filter-btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('active');
+                btn.classList.remove('income');
+                btn.classList.remove('expense');
+            });
+            
+            const activeBtn = document.querySelector(`.type-filter-btn[onclick*="${app.filters.type}"]`);
+            if (activeBtn) {
+                activeBtn.classList.add('active');
+                if (app.filters.type === 'income') {
+                    activeBtn.classList.add('income');
+                } else if (app.filters.type === 'expense') {
+                    activeBtn.classList.add('expense');
+                }
+            } else {
+                // Если не нашли, активируем кнопку "Все"
+                document.querySelector('.type-filter-btn[onclick*="all"]').classList.add('active');
+            }
+        },
+
+        setQuickTypeFilter: function(type) {
+            app.filters.type = type;
+            app.updateQuickTypeButtons();
+            app.render();
+            app.renderActiveFilters();
+            app.saveFiltersToStorage();
+        },
+
+        loadLists: async () => {
+            try {
+                const r = await fetch(API_URL + '?action=getLists');
+                const j = await r.json();
+                const w = j.workers || ['Иванов'];
+                document.getElementById('lWork').innerHTML = w.map(x=>`<option value="${x}">`).join('');
+            } catch(e){}
+        },
+
+        nav: (viewId, el, isFab) => {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            
+            if(!isFab) {
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                if(el) el.classList.add('active');
+            }
+            if(viewId==='view-add' && !document.getElementById('eid').value) app.reset();
+            if(viewId==='view-stats') app.charts();
+            window.scrollTo({top:0, behavior:'smooth'});
+        },
+
+        initMonths: async () => {
+            app.status('load');
+            try {
+                const r = await fetch(API_URL + '?action=getMonths&t='+Date.now());
+                const j = await r.json();
+                const sel = document.getElementById('monthPicker'); sel.innerHTML='';
+                let ms = j.months || [new Date().toISOString().slice(0,7)];
+                ms.forEach(m => {
+                    const d = new Date(m+'-01');
+                    const n = d.toLocaleDateString('ru-RU',{month:'long',year:'numeric'});
+                    sel.add(new Option(n.charAt(0).toUpperCase()+n.slice(1), m));
+                });
+                await app.load();
+            } catch(e){ app.status('err'); }
+        },
+
+        load: async () => {
+            app.status('load');
+            const m = document.getElementById('monthPicker').value;
+            if(!m) return;
+            const [y, mn] = m.split('-');
+            try {
+                const r = await fetch(`${API_URL}?action=getData&month=${mn}&year=${y}&t=${Date.now()}`);
+                const j = await r.json();
+                app.d = j.data || [];
+                app.updateLists();
+                app.updateStats(); // Обновляем статистику
+                app.render();
+                app.status('ok');
+                app.updateCategoryFilterOptions();
+            } catch(e){ app.status('err'); }
+        },
+
+        updateLists: () => {
+            const cl = [...new Set(app.d.map(x=>x.client).filter(Boolean))].sort();
+            document.getElementById('lCli').innerHTML = cl.map(c=>`<option value="${c}">`).join('');
+            
+            const w = [...new Set(app.d.map(x=>x.worker).filter(Boolean))].sort();
+            const flt = document.getElementById('workerFilter');
+            const cur = flt.value;
+            flt.innerHTML = '<option value="">Все исполнители</option>' + w.map(x=>`<option value="${x}">${x}</option>`).join('');
+            flt.value = cur;
+        },
+
+        updateCategoryFilterOptions: () => {
+            const categories = [...new Set(app.d.map(x => x.category).filter(Boolean))].sort();
+            const container = document.getElementById('filterCategories');
+            container.innerHTML = '';
+            
+            categories.forEach(category => {
+                const chip = document.createElement('div');
+                chip.className = 'chip';
+                chip.textContent = category;
+                chip.dataset.category = category;
+                
+                if (app.filters.categories.includes(category)) {
+                    chip.classList.add('active');
+                }
+                
+                chip.onclick = () => {
+                    chip.classList.toggle('active');
+                    app.toggleCategory(category);
+                };
+                
+                container.appendChild(chip);
+            });
+        },
+
+        updateCategoryFilterUI: () => {
+            const chips = document.querySelectorAll('#filterCategories .chip');
+            chips.forEach(chip => {
+                const category = chip.dataset.category;
+                if (app.filters.categories.includes(category)) {
+                    chip.classList.add('active');
+                } else {
+                    chip.classList.remove('active');
+                }
+            });
+        },
+
+        toggleCategory: (category) => {
+            const index = app.filters.categories.indexOf(category);
+            if (index === -1) {
+                app.filters.categories.push(category);
+            } else {
+                app.filters.categories.splice(index, 1);
+            }
+            app.saveFiltersToStorage();
+            app.render();
+            app.renderActiveFilters();
+        },
+
+        // Новая функция расширенного поиска
+        extendedSearch: function(record, query) {
+            const q = query.toLowerCase();
+            const searchFields = [
+                record.client,
+                record.desc,
+                record.category,
+                String(record.amount),
+                String(record.volume),
+                record.worker,
+                record.payment,
+                record.status,
+                record.date ? record.date.split('-').reverse().join('.') : ''
+            ];
+            
+            return searchFields.some(field => 
+                field && field.toString().toLowerCase().includes(q)
+            );
+        },
+
+        // Функция фильтрации записей
+        filterRecords: function(records) {
+            return records.filter(record => {
+                // Фильтр по текстовому поиску
+                if (this.filters.searchText && 
+                    !this.extendedSearch(record, this.filters.searchText)) {
+                    return false;
+                }
+                
+                // Фильтр по исполнителю
+                if (this.filters.worker && 
+                    record.worker !== this.filters.worker) {
+                    return false;
+                }
+                
+                // Фильтр по сумме
+                const amount = Number(record.amount);
+                if (this.filters.minAmount !== null && 
+                    amount < this.filters.minAmount) {
+                    return false;
+                }
+                if (this.filters.maxAmount !== null && 
+                    amount > this.filters.maxAmount) {
+                    return false;
+                }
+                
+                // Фильтр по категории
+                if (this.filters.categories.length > 0 &&
+                    !this.filters.categories.includes(record.category)) {
+                    return false;
+                }
+                
+                // Фильтр по статусу оплаты
+                if (this.filters.paymentStatus === 'paid' && 
+                    record.status !== 'Оплачено') {
+                    return false;
+                }
+                if (this.filters.paymentStatus === 'unpaid' && 
+                    record.status !== 'Не оплачено') {
+                    return false;
+                }
+                
+                // Фильтр по типу операции
+                if (this.filters.type === 'income' && 
+                    record.type !== 'Доход') {
+                    return false;
+                }
+                if (this.filters.type === 'expense' && 
+                    record.type !== 'Расход') {
+                    return false;
+                }
+                
+                return true;
+            });
+        },
+
+        render: function() {
+            const list = document.getElementById('listContainer'); 
+            list.innerHTML = '';
+            
+            // Получаем отфильтрованные записи
+            const filtered = this.filterRecords(this.d);
+            
+            if(!filtered.length) { 
+                list.innerHTML='<div style="text-align:center;color:#999;margin-top:40px;padding:40px">Нет записей, соответствующих фильтрам</div>'; 
+                return; 
+            }
+            
+            filtered.forEach(r => {
+                const inc = r.type==='Доход';
+                const v = Number(r.amount);
+                
+                const div = document.createElement('div');
+                div.className = 'list-item';
+                div.onclick = () => app.edit(r.id);
+                div.innerHTML = `
+                    <div class="icon-box ${inc?'icon-inc':'icon-exp'}">
+                        <i class="${inc?'ri-arrow-up-line':'ri-arrow-down-line'}"></i>
+                    </div>
+                    <div class="item-main">
+                        <h3>${r.client || r.category}</h3>
+                        <p>${r.date.split('-').reverse().slice(0,2).join('.')} • ${r.worker||'-'} ${r.status==='Не оплачено'?'<span style="color:red">● Долг</span>':''}</p>
+                        <div style="margin-top:4px"><span class="tag tag-gray">${r.payment}</span></div>
+                    </div>
+                    <div class="item-amt" style="color:${inc?'var(--success)':'var(--text-main)'}">
+                        ${inc?'+':'-'} ${v.toLocaleString()} ₽
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+            
+            // НЕ обновляем статистику здесь - она уже обновлена в updateStats
+            // и не должна меняться при фильтрации
+        },
+
+        updateStats: () => {
+            // Считаем общие суммы ВСЕХ операций за месяц (без учета фильтров)
+            let i=0, e=0;
+            app.d.forEach(r => { 
+                if(r.type==='Доход') i+=Number(r.amount); 
+                else e+=Number(r.amount); 
+            });
+            
+            // Сохраняем общие суммы в переменные
+            app.totalIncome = i;
+            app.totalExpense = e;
+            app.totalBalance = i - e;
+            
+            // Обновляем отображение с общими суммами (независимо от фильтров)
+            document.getElementById('sInc').innerText = i.toLocaleString() + ' ₽';
+            document.getElementById('sExp').innerText = e.toLocaleString() + ' ₽';
+            document.getElementById('sBal').innerText = (i - e).toLocaleString() + ' ₽';
+        },
+
+        handleSearch: function() {
+            const searchInput = document.getElementById('searchInp');
+            app.filters.searchText = searchInput.value.trim();
+            app.render();
+            app.renderActiveFilters();
+            app.saveFiltersToStorage();
+        },
+
+        handleFilterChange: function() {
+            const worker = document.getElementById('workerFilter').value;
+            const minAmount = document.getElementById('filterMinAmount').value;
+            const maxAmount = document.getElementById('filterMaxAmount').value;
+            
+            app.filters.worker = worker;
+            app.filters.minAmount = minAmount ? Number(minAmount) : null;
+            app.filters.maxAmount = maxAmount ? Number(maxAmount) : null;
+            
+            app.render();
+            app.renderActiveFilters();
+            app.saveFiltersToStorage();
+        },
+
+        toggleFilters: function() {
+            const filters = document.getElementById('advancedFilters');
+            const filterBtn = document.getElementById('filterBtn');
+            
+            if (filters.style.display === 'none' || !filters.style.display) {
+                filters.style.display = 'block';
+                filterBtn.classList.add('active');
+                filterBtn.innerHTML = '<i class="ri-filter-fill"></i>';
+            } else {
+                filters.style.display = 'none';
+                filterBtn.classList.remove('active');
+                filterBtn.innerHTML = '<i class="ri-filter-line"></i>';
+            }
+        },
+
+        closeFilters: function() {
+            const filters = document.getElementById('advancedFilters');
+            const filterBtn = document.getElementById('filterBtn');
+            
+            filters.style.display = 'none';
+            filterBtn.classList.remove('active');
+            filterBtn.innerHTML = '<i class="ri-filter-line"></i>';
+        },
+
+        setPaymentStatus: function(status) {
+            app.filters.paymentStatus = status;
+            app.render();
+            app.renderActiveFilters();
+            app.saveFiltersToStorage();
+        },
+
+        setTypeFilter: function(type) {
+            app.filters.type = type;
+            app.updateQuickTypeButtons();
+            app.render();
+            app.renderActiveFilters();
+            app.saveFiltersToStorage();
+        },
+
+        renderActiveFilters: function() {
+            const container = document.getElementById('activeFilters');
+            container.innerHTML = '';
+            
+            const filters = [];
+            
+            if (app.filters.searchText) {
+                filters.push({text: `Поиск: "${app.filters.searchText}"`, type: 'search', value: app.filters.searchText});
+            }
+            if (app.filters.worker) {
+                filters.push({text: `Исполнитель: ${app.filters.worker}`, type: 'worker', value: app.filters.worker});
+            }
+            if (app.filters.minAmount !== null || app.filters.maxAmount !== null) {
+                const min = app.filters.minAmount !== null ? app.filters.minAmount : '0';
+                const max = app.filters.maxAmount !== null ? app.filters.maxAmount : '∞';
+                filters.push({text: `Сумма: ${min} - ${max} ₽`, type: 'amount', value: `${min}-${max}`});
+            }
+            if (app.filters.categories.length > 0) {
+                if (app.filters.categories.length === 1) {
+                    filters.push({text: `Категория: ${app.filters.categories[0]}`, type: 'categories', value: app.filters.categories});
+                } else {
+                    filters.push({text: `Категории: ${app.filters.categories.length}`, type: 'categories', value: app.filters.categories});
+                }
+            }
+            if (app.filters.paymentStatus !== 'all') {
+                const statusText = app.filters.paymentStatus === 'paid' ? 'Оплачено' : 'Не оплачено';
+                filters.push({text: `Статус: ${statusText}`, type: 'paymentStatus', value: app.filters.paymentStatus});
+            }
+            if (app.filters.type !== 'all') {
+                const typeText = app.filters.type === 'income' ? 'Доход' : 'Расход';
+                filters.push({text: `Тип: ${typeText}`, type: 'type', value: app.filters.type});
+            }
+            
+            filters.forEach(filter => {
+                const chip = document.createElement('div');
+                chip.className = 'filter-chip';
+                chip.innerHTML = `
+                    ${filter.text}
+                    <span class="filter-chip-remove" onclick="app.removeFilter('${filter.type}', '${filter.value}')">×</span>
+                `;
+                container.appendChild(chip);
+            });
+            
+            if (filters.length > 0) {
+                const clearBtn = document.createElement('button');
+                clearBtn.className = 'clear-filters-btn';
+                clearBtn.innerHTML = '<i class="ri-close-line"></i> Очистить все';
+                clearBtn.onclick = app.clearAllFilters;
+                container.appendChild(clearBtn);
+            }
+            
+            container.style.display = 'flex';
+        },
+
+        removeFilter: function(type, value) {
+            switch(type) {
+                case 'search':
+                    app.filters.searchText = '';
+                    document.getElementById('searchInp').value = '';
+                    document.getElementById('clearSearch').style.display = 'none';
+                    break;
+                case 'worker':
+                    app.filters.worker = '';
+                    document.getElementById('workerFilter').value = '';
+                    break;
+                case 'amount':
+                    app.filters.minAmount = null;
+                    app.filters.maxAmount = null;
+                    document.getElementById('filterMinAmount').value = '';
+                    document.getElementById('filterMaxAmount').value = '';
+                    break;
+                case 'categories':
+                    app.filters.categories = [];
+                    app.updateCategoryFilterUI();
+                    break;
+                case 'paymentStatus':
+                    app.filters.paymentStatus = 'all';
+                    break;
+                case 'type':
+                    app.filters.type = 'all';
+                    app.updateQuickTypeButtons();
+                    break;
+            }
+            
+            app.render();
+            app.renderActiveFilters();
+            app.saveFiltersToStorage();
+        },
+
+        clearAllFilters: function() {
+            app.filters = {
+                searchText: '',
+                worker: '',
+                minAmount: null,
+                maxAmount: null,
+                categories: [],
+                paymentStatus: 'all',
+                type: 'all'
+            };
+            
+            // Сбросить UI элементы
+            document.getElementById('searchInp').value = '';
+            document.getElementById('clearSearch').style.display = 'none';
+            document.getElementById('workerFilter').value = '';
+            document.getElementById('filterMinAmount').value = '';
+            document.getElementById('filterMaxAmount').value = '';
+            
+            app.updateCategoryFilterUI();
+            app.updateQuickTypeButtons();
+            app.render();
+            app.renderActiveFilters();
+            app.saveFiltersToStorage();
+        },
+
+        resetAmountFilter: function() {
+            app.filters.minAmount = null;
+            app.filters.maxAmount = null;
+            document.getElementById('filterMinAmount').value = '';
+            document.getElementById('filterMaxAmount').value = '';
+            app.render();
+            app.renderActiveFilters();
+            app.saveFiltersToStorage();
+        },
+
+        resetCategoryFilter: function() {
+            app.filters.categories = [];
+            app.updateCategoryFilterUI();
+            app.render();
+            app.renderActiveFilters();
+            app.saveFiltersToStorage();
+        },
+
+        resetPaymentFilter: function() {
+            app.filters.paymentStatus = 'all';
+            app.render();
+            app.renderActiveFilters();
+            app.saveFiltersToStorage();
+        },
+
+        resetTypeFilter: function() {
+            app.filters.type = 'all';
+            app.updateQuickTypeButtons();
+            app.render();
+            app.renderActiveFilters();
+            app.saveFiltersToStorage();
+        },
+
+        save: async () => {
+            const btn = document.getElementById('btnSave');
+            btn.innerText='Сохраняю...'; btn.disabled=true;
+            
+            const pl = {
+                action: document.getElementById('eid').value?'edit':'add',
+                id: document.getElementById('eid').value,
+                date: document.getElementById('iDate').value,
+                type: document.getElementById('iType').value,
+                category: document.getElementById('iCat').value,
+                amount: document.getElementById('iAmt').value,
+                volume: document.getElementById('iVol').value,
+                worker: document.getElementById('iWork').value,
+                client: document.getElementById('iCli').value,
+                payment: document.getElementById('iPay').value,
+                status: document.getElementById('iStat').value,
+                desc: document.getElementById('iDesc').value
+            };
+
+            try {
+                await fetch(API_URL, {method:'POST', body:JSON.stringify(pl)});
+                app.toast('Сохранено');
+                app.reset();
+                app.nav('view-home');
+                setTimeout(app.load, 500);
+            } catch(e) { alert('Ошибка'); }
+            finally { btn.innerText='Сохранить'; btn.disabled=false; }
+        },
+
+        del: async () => {
+            if(!confirm('Удалить?')) return;
+            await fetch(API_URL, {method:'POST', body:JSON.stringify({action:'delete', id:document.getElementById('eid').value})});
+            app.toast('Удалено'); app.reset(); app.nav('view-home'); setTimeout(app.load, 500);
+        },
+
+        edit: (id) => {
+            const r = app.d.find(x=>String(x.id)===String(id));
+            if(!r) return;
+            document.getElementById('eid').value=r.id;
+            document.getElementById('iDate').value=r.date;
+            document.getElementById('iType').value=r.type; app.cats();
+            document.getElementById('iCat').value=r.category;
+            document.getElementById('iAmt').value=r.amount;
+            document.getElementById('iVol').value=r.volume;
+            document.getElementById('iWork').value=r.worker;
+            document.getElementById('iCli').value=r.client;
+            document.getElementById('iPay').value=r.payment;
+            document.getElementById('iStat').value=r.status;
+            document.getElementById('iDesc').value=r.desc;
+            
+            document.getElementById('btnSave').innerText='Изменить';
+            document.getElementById('btnDel').style.display='block';
+            document.getElementById('btnCancel').style.display='block';
+            app.nav('view-add');
+        },
+
+        reset: () => {
+            document.getElementById('eid').value='';
+            document.getElementById('iAmt').value='';
+            document.getElementById('iVol').value='';
+            document.getElementById('iCli').value='';
+            document.getElementById('iDesc').value='';
+            document.getElementById('btnSave').innerText='Сохранить';
+            document.getElementById('btnDel').style.display='none';
+            document.getElementById('btnCancel').style.display='none';
+            app.setDate(0);
+        },
+
+        charts: () => {
+            const iCtx=document.getElementById('chartInc'), eCtx=document.getElementById('chartExp'), tCtx=document.getElementById('chartTrend');
+            if(window.c1) window.c1.destroy(); if(window.c2) window.c2.destroy(); if(window.c3) window.c3.destroy();
+
+            const iC={}, eC={}, dD={};
+            app.d.forEach(x => {
+                const v=Number(x.amount), d=x.date.split('-')[2];
+                if(x.type==='Доход') { iC[x.category]=(iC[x.category]||0)+v; dD[d]=(dD[d]||0)+v; }
+                else eC[x.category]=(eC[x.category]||0)+v;
+            });
+
+            window.c1 = new Chart(iCtx, { type:'doughnut', data:{labels:Object.keys(iC), datasets:[{data:Object.values(iC), backgroundColor:['#3B82F6','#10B981','#F59E0B','#8B5CF6']}]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right'}}} });
+            window.c2 = new Chart(eCtx, { type:'doughnut', data:{labels:Object.keys(eC), datasets:[{data:Object.values(eC), backgroundColor:['#EF4444','#F97316','#64748B','#EC4899']}]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right'}}} });
+            window.c3 = new Chart(tCtx, { type:'bar', data:{labels:Object.keys(dD).sort(), datasets:[{label:'Выручка', data:Object.values(dD), backgroundColor:'#FFDD2D', borderRadius:4}]}, options:{responsive:true,maintainAspectRatio:false} });
+        },
+
+        setDate: (o) => {
+            const d = new Date(); d.setDate(d.getDate() + o);
+            const local = new Date(d.getTime() - (d.getTimezoneOffset()*60000));
+            document.getElementById('iDate').value = local.toISOString().split('T')[0];
+        },
+        setVol: (v) => document.getElementById('iVol').value=v,
+        cats: () => {
+            const t = document.getElementById('iType').value;
+            const s = document.getElementById('iCat'); s.innerHTML='';
+            CATS[t].forEach(c => s.add(new Option(c,c)));
+        },
+        status: (s) => {
+            const t = document.getElementById('statusText');
+            const l = document.getElementById('loader');
+            if(s==='load') { t.innerHTML='<span style="color:orange">●</span> Загрузка...'; l.style.display='flex'; }
+            if(s==='ok') { t.innerHTML='<span style="color:#10B981">●</span> Онлайн'; l.style.display='none'; }
+            if(s==='err') { t.innerHTML='<span style="color:red">●</span> Ошибка'; l.style.display='none'; }
+        },
+        toast: (m) => {
+            const t = document.getElementById('toast'); t.innerText=m;
+            t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 2500);
+        },
+        xls: () => {
+            const ws = XLSX.utils.json_to_sheet(app.d);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Data");
+            XLSX.writeFile(wb, "Report.xlsx");
+        }
+    };
+
+    window.onload = app.init;
+</script>
+</body>
+</html>
